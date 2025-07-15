@@ -3,26 +3,28 @@ kind: CronJob
 metadata:
   name: refty-sync-dubizzle-off-plan-projects
 spec:
-  schedule: "7 3,15 * * *" # see https://crontab.guru/
+  schedule: 7 3,15 * * *
   jobTemplate:
     spec:
       template:
         spec:
           containers:
             - name: refty-data-sync-worker
-              image: ghcr.io/refty-yapi/bigquery/data-sync-worker:05-20-c20533
-              command: ["ash", "./sync_dubizzle_off_plan_projects"]
+              image: ghcr.io/refty-yapi/bigquery/data-sync-worker:08-06-zzz
+              command:
+                - ash
+                - ./sync_dubizzle_off_plan_projects
               volumeMounts:
-                - mountPath: "/home/syncworker/sa"
+                - mountPath: /home/syncworker/sa
                   name: gcloud-secret
                   readOnly: true
               env:
                 - name: USE_PARALLEL_THRESHOLD
-                  value: "100M"
+                  value: 100M
                 - name: POSTGRES_HOST
                   value: postgres
                 - name: POSTGRES_PORT
-                  value: "5432"
+                  value: '5432'
                 - name: POSTGRES_USER
                   valueFrom:
                     secretKeyRef:
@@ -34,7 +36,7 @@ spec:
                   valueFrom:
                     secretKeyRef:
                       name: postgres-secret
-                      key: password                  
+                      key: password
           volumes:
             - name: gcloud-secret
               secret:
