@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: refty-sync-dubizzle-off-plan-projects
+spec:
+  schedule: "7 3,15 * * *" # see https://crontab.guru/
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: refty-data-sync-worker
+              image: ghcr.io/refty-yapi/bigquery/data-sync-worker:05-20-c20533
+              command: ["ash", "./sync_dubizzle_off_plan_projects"]
+              volumeMounts:
+                - mountPath: "/home/syncworker/sa"
+                  name: gcloud-secret
+                  readOnly: true
+              env:
+                - name: USE_PARALLEL_THRESHOLD
+                  value: "100M"
+                - name: POSTGRES_HOST
+                  value: postgres
+                - name: POSTGRES_PORT
+                  value: "5432"
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-secret
+                      key: username
+                - name: POSTGRES_DB
+                  value: postgres
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-secret
+                      key: password                  
+          volumes:
+            - name: gcloud-secret
+              secret:
+                secretName: refty-gcloud-data-update-worker
+          imagePullSecrets:
+            - name: regcred
+          restartPolicy: Never
+      backoffLimit: 2
